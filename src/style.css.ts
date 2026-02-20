@@ -87,6 +87,7 @@ const glassBanner3 = style([
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
+    padding: '1rem 1rem 20px',
   },
 ]);
 
@@ -100,6 +101,24 @@ const dangerBox = style({
   backgroundColor: '#392523',
 });
 
+const glassBanner4 = recipe({
+  base: [
+    glassBanner3,
+    {
+      border: '1px solid transparent',
+      transition: 'all 0.2s ease-in-out',
+    },
+  ],
+  variants: {
+    selected: {
+      true: {
+        border: '1px solid #7A63F1',
+        backgroundColor: '#343159',
+      },
+    },
+  },
+});
+
 export const appSt = {
   bottomBtn,
   container,
@@ -111,4 +130,5 @@ export const appSt = {
   glassBanner2,
   glassBanner3,
   dangerBox,
+  glassBanner4,
 };

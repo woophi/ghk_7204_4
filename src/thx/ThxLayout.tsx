@@ -16,7 +16,7 @@ export const ThxLayout = () => {
   return (
     <>
       <div className={thxSt.container}>
-        <Spinner style={{ margin: 'auto' }} visible preset={48} />
+        <Spinner style={{ margin: 'auto', color: '#fff' }} visible preset={48} />
       </div>
     </>
   );

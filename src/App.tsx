@@ -3,6 +3,7 @@ import { Collapse } from '@alfalab/core-components/collapse/cssm';
 import { Gap } from '@alfalab/core-components/gap/cssm';
 import { List } from '@alfalab/core-components/list/cssm';
 import { PureCell } from '@alfalab/core-components/pure-cell/cssm';
+import { Radio } from '@alfalab/core-components/radio/cssm';
 import { Status } from '@alfalab/core-components/status/cssm';
 import { Typography } from '@alfalab/core-components/typography/cssm';
 import { CategoryCommisionMIcon } from '@alfalab/icons-glyph/CategoryCommisionMIcon';
@@ -19,6 +20,7 @@ import { SelectionSlider } from './components/SelectionSlider';
 import { LS, LSKeys } from './ls';
 import { appSt } from './style.css';
 import { ThxLayout } from './thx/ThxLayout';
+import { sendDataToGA } from './utils/events';
 
 const forWhom = [
   {
@@ -48,7 +50,7 @@ const faqs = [
   {
     question: 'Сколько я могу заработать?',
     answers: [
-      'Вы получаете до 70% прибыли, заработанной на Funded-аккаунте. Например, на счёте 100 000 ₽ при достижении +10% прибыли ваш доход составит 7 000 ₽ при вложении всего 2 000 ₽ за участие',
+      'Вы получаете до 70% прибыли (до 90% на старших тарифах), заработанной на Funded-аккаунте. Например, на счёте 100 000 ₽ при достижении +10% прибыли ваш доход составит 7 000 ₽ при вложении всего 2 000 ₽ за участие. На счёте 5 000 000 ₽ при тех же +10% — ваша доля составит 350 000 ₽',
     ],
   },
   {
@@ -83,14 +85,16 @@ const faqs = [
   },
 ];
 
-const YOUR_PART = 70;
-const SUM_HUNDLE = 100_000;
+const YOUR_PART = 90;
+const SUM_HUNDLE = 5_000_000;
 
 export const App = () => {
   const [loading, setLoading] = useState(false);
   const [collapsedItems, setCollapsedItem] = useState<string[]>(['special']);
   const [selectedTab, setSelectedTab] = useState('5%');
   const [thxShow, setThx] = useState(LS.getItem(LSKeys.ShowThx, false));
+  const [steps, setSteps] = useState<'init' | 'tariff'>('init');
+  const [selectedTariff, setSelectedTariff] = useState<string>('');
 
   const income = (YOUR_PART / 100) * ((selectedTab.replace('%', '') as unknown as number) / 100) * SUM_HUNDLE;
   const netIncome = income * (YOUR_PART / 100);
@@ -102,10 +106,13 @@ export const App = () => {
   }, []);
 
   const submit = () => {
-    window.gtag('event', '7204_landing_next_click', { var: 'var4' });
+    window.gtag('event', '7204_tariff_select', { var: 'var4' });
     setLoading(true);
-    setLoading(false);
-    setThx(true);
+
+    sendDataToGA({ tariff_name: selectedTariff }).then(() => {
+      setLoading(false);
+      setThx(true);
+    });
   };
 
   const onTabClick = (tab: string) => {
@@ -115,6 +122,201 @@ export const App = () => {
 
   if (thxShow) {
     return <ThxLayout />;
+  }
+
+  if (steps === 'tariff') {
+    return (
+      <>
+        <div className={appSt.container}>
+          <Typography.TitleResponsive
+            style={{ marginTop: '12px' }}
+            tag="h1"
+            view="large"
+            font="system"
+            weight="medium"
+            color="primary-inverted"
+          >
+            Выберите тариф
+          </Typography.TitleResponsive>
+          <div
+            className={appSt.glassBanner4({ selected: selectedTariff === 'Trader' })}
+            onClick={() => setSelectedTariff('Trader')}
+          >
+            <div className={appSt.rowSb}>
+              <Typography.Text view="primary-small" color="primary-inverted" weight="medium">
+                Trader
+              </Typography.Text>
+              <Radio checked={selectedTariff === 'Trader'} onChange={() => setSelectedTariff('Trader')} />
+            </div>
+
+            <div>
+              <Typography.Text tag="p" defaultMargins={false} view="secondary-large" color="secondary-inverted">
+                Счёт Challenge:
+              </Typography.Text>
+
+              <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary-inverted">
+                100 000 ₽
+              </Typography.TitleResponsive>
+            </div>
+
+            <div>
+              <Gap size={8} />
+
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Участие в отборе
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  2 000 ₽
+                </Typography.Text>
+              </div>
+              <Gap size={4} />
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Доплата после отбора
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  Не требуется
+                </Typography.Text>
+              </div>
+              <Gap size={4} />
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Доля результата
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  70%
+                </Typography.Text>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={appSt.glassBanner4({ selected: selectedTariff === 'Pro Trader' })}
+            onClick={() => setSelectedTariff('Pro Trader')}
+          >
+            <div className={appSt.rowSb}>
+              <Typography.Text view="primary-small" color="primary-inverted" weight="medium">
+                Pro Trader
+              </Typography.Text>
+              <Radio checked={selectedTariff === 'Pro Trader'} onChange={() => setSelectedTariff('Pro Trader')} />
+            </div>
+
+            <div>
+              <Typography.Text tag="p" defaultMargins={false} view="secondary-large" color="secondary-inverted">
+                Счёт Challenge:
+              </Typography.Text>
+
+              <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary-inverted">
+                1 000 000 ₽
+              </Typography.TitleResponsive>
+            </div>
+
+            <div>
+              <Gap size={8} />
+
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Участие в отборе
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  2 000 ₽
+                </Typography.Text>
+              </div>
+              <Gap size={4} />
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Доплата после отбора
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  18 000 ₽
+                </Typography.Text>
+              </div>
+              <Gap size={4} />
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Доля результата
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  80%
+                </Typography.Text>
+              </div>
+            </div>
+          </div>
+          <div
+            className={appSt.glassBanner4({ selected: selectedTariff === 'Alfa Trader' })}
+            onClick={() => setSelectedTariff('Alfa Trader')}
+          >
+            <div className={appSt.rowSb}>
+              <Typography.Text view="primary-small" color="primary-inverted" weight="medium">
+                Alfa Trader
+              </Typography.Text>
+              <Radio checked={selectedTariff === 'Alfa Trader'} onChange={() => setSelectedTariff('Alfa Trader')} />
+            </div>
+
+            <div>
+              <Typography.Text tag="p" defaultMargins={false} view="secondary-large" color="secondary-inverted">
+                Счёт Challenge:
+              </Typography.Text>
+
+              <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary-inverted">
+                5 000 000 ₽
+              </Typography.TitleResponsive>
+            </div>
+
+            <div>
+              <Gap size={8} />
+
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Участие в отборе
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  2 000 ₽
+                </Typography.Text>
+              </div>
+              <Gap size={4} />
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Доплата после отбора
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  98 000 ₽
+                </Typography.Text>
+              </div>
+              <Gap size={4} />
+              <div className={appSt.rowSb}>
+                <Typography.Text view="secondary-large" color="secondary-inverted">
+                  Доля результата
+                </Typography.Text>
+                <Typography.Text view="primary-small" color="primary-inverted">
+                  90%
+                </Typography.Text>
+              </div>
+            </div>
+          </div>
+
+          <Typography.Text view="secondary-large" color="secondary-inverted">
+            Тариф можно сменить после прохождения этапа отбора
+          </Typography.Text>
+        </div>
+
+        <Gap size={96} />
+
+        <div className={appSt.bottomBtn}>
+          <Button
+            style={{ backgroundColor: '#F2F3F5', color: '#030306E0' }}
+            loading={loading}
+            block
+            view="primary"
+            onClick={submit}
+            disabled={!selectedTariff}
+          >
+            Выбрать
+          </Button>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -130,10 +332,11 @@ export const App = () => {
             weight="medium"
             color="primary-inverted"
           >
-            Получите счёт на 100 000 ₽
+            Получите счёт до 5 000 000 ₽
           </Typography.TitleResponsive>
           <Typography.Text view="primary-small" color="primary-inverted">
-            Оплатите <b>2 000 ₽</b> и получайте до 70% прибыли после успешного отбора
+            Начните с этапа отбора
+            <br /> на счёте 100 000 ₽ — участие <b>2 000 ₽</b>
           </Typography.Text>
         </div>
 
@@ -149,14 +352,17 @@ export const App = () => {
         </Typography.TitleResponsive>
 
         <Typography.Text view="primary-small" color="secondary-inverted">
-          Необходимо достичь <span style={{ color: '#0CC44D' }}>+2%</span> доходности портфеля, не превышая просадку{' '}
+          Отбор проходит на счёте 100 000 ₽ для всех участников.
+        </Typography.Text>
+        <Typography.Text view="primary-small" color="secondary-inverted">
+          Необходимо показать <span style={{ color: '#0CC44D' }}>+2%</span> прибыли, не превышая просадку{' '}
           <span style={{ color: '#EF3124' }}>−1%</span> в течение одной недели
         </Typography.Text>
 
         <SelectionSlider />
 
         <Typography.Text view="primary-small" color="secondary-inverted">
-          Если вы не пройдете отбор, можно попробовать снова при повторной оплате
+          Если отбор не пройден, можно повторить участие за 2 000 ₽
         </Typography.Text>
 
         <Typography.TitleResponsive
@@ -170,6 +376,10 @@ export const App = () => {
           После успешного прохождения
         </Typography.TitleResponsive>
 
+        <Typography.Text view="primary-small" color="secondary-inverted">
+          После успешного отбора вы можете увеличить размер счёта до 5 000 000 ₽ при доплате
+        </Typography.Text>
+
         <PureCell className={appSt.glassBanner}>
           <PureCell.Graphics verticalAlign="top">
             <CategoryCommisionMIcon color="#fff" />
@@ -177,11 +387,11 @@ export const App = () => {
           <PureCell.Content>
             <PureCell.Main>
               <Typography.TitleResponsive tag="h4" view="xsmall" font="system" weight="medium" color="primary-inverted">
-                До 70% прибыли
+                До 90% прибыли
               </Typography.TitleResponsive>
               <Gap size={8} />
               <Typography.Text view="primary-small" color="secondary-inverted">
-                Ваша доля от профита составляет до 70%. Выплаты производятся регулярно по итогам 2 недель
+                Ваша доля от профита составляет до 90%. Выплаты производятся регулярно по итогам периода
               </Typography.Text>
             </PureCell.Main>
           </PureCell.Content>
@@ -306,7 +516,7 @@ export const App = () => {
             </Status>
           </div>
           <Typography.Text view="primary-small" color="secondary-inverted">
-            Вы управляете счётом на 100 000 ₽. Риск ограничен стоимостью участия
+            Вы управляете счётом до 5 000 000 ₽. Риск ограничен стоимостью участия
           </Typography.Text>
 
           <div>
@@ -356,7 +566,173 @@ export const App = () => {
           </PureCell>
         ))}
 
-        <div>
+        <Typography.TitleResponsive
+          style={{ marginTop: '12px' }}
+          tag="h2"
+          view="small"
+          font="system"
+          weight="medium"
+          color="primary-inverted"
+        >
+          Тарифы
+        </Typography.TitleResponsive>
+
+        <div className={appSt.glassBanner3}>
+          <Typography.Text view="primary-small" color="primary-inverted" weight="medium">
+            Trader
+          </Typography.Text>
+
+          <div>
+            <Typography.Text tag="p" defaultMargins={false} view="secondary-large" color="secondary-inverted">
+              Счёт Challenge:
+            </Typography.Text>
+
+            <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary-inverted">
+              100 000 ₽
+            </Typography.TitleResponsive>
+          </div>
+
+          <div style={{ borderTop: '.5px solid #FFFFFF26' }}>
+            <Gap size={8} />
+
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Участие в отборе
+              </Typography.Text>
+              <Typography.Text view="primary-small" color="primary-inverted">
+                2 000 ₽
+              </Typography.Text>
+            </div>
+            <Gap size={4} />
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Доплата после отбора
+              </Typography.Text>
+              <Typography.Text view="primary-small" color="primary-inverted">
+                Не требуется
+              </Typography.Text>
+            </div>
+            <Gap size={4} />
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Доля результата
+              </Typography.Text>
+              <Typography.Text style={{ color: '#00D5BE' }} view="primary-small" color="primary-inverted">
+                70%
+              </Typography.Text>
+            </div>
+          </div>
+        </div>
+
+        <div className={appSt.glassBanner3}>
+          <div>
+            <Status view="contrast" color="teal" size={20}>
+              <Typography.Text view="secondary-small" weight="medium" style={{ textTransform: 'uppercase' }}>
+                Доступен после успешного отбора
+              </Typography.Text>
+            </Status>
+          </div>
+          <Typography.Text view="primary-small" color="primary-inverted" weight="medium">
+            Pro Trader
+          </Typography.Text>
+
+          <div>
+            <Typography.Text tag="p" defaultMargins={false} view="secondary-large" color="secondary-inverted">
+              Счёт Challenge:
+            </Typography.Text>
+
+            <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary-inverted">
+              1 000 000 ₽
+            </Typography.TitleResponsive>
+          </div>
+
+          <div style={{ borderTop: '.5px solid #FFFFFF26' }}>
+            <Gap size={8} />
+
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Участие в отборе
+              </Typography.Text>
+              <Typography.Text view="primary-small" color="primary-inverted">
+                2 000 ₽
+              </Typography.Text>
+            </div>
+            <Gap size={4} />
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Доплата после отбора
+              </Typography.Text>
+              <Typography.Text view="primary-small" color="primary-inverted">
+                18 000 ₽
+              </Typography.Text>
+            </div>
+            <Gap size={4} />
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Доля результата
+              </Typography.Text>
+              <Typography.Text style={{ color: '#00D5BE' }} view="primary-small" color="primary-inverted">
+                80%
+              </Typography.Text>
+            </div>
+          </div>
+        </div>
+
+        <div className={appSt.glassBanner3}>
+          <div>
+            <Status view="contrast" color="teal" size={20}>
+              <Typography.Text view="secondary-small" weight="medium" style={{ textTransform: 'uppercase' }}>
+                Доступен после успешного отбора
+              </Typography.Text>
+            </Status>
+          </div>
+          <Typography.Text view="primary-small" color="primary-inverted" weight="medium">
+            Alfa Trader
+          </Typography.Text>
+
+          <div>
+            <Typography.Text tag="p" defaultMargins={false} view="secondary-large" color="secondary-inverted">
+              Счёт Challenge:
+            </Typography.Text>
+
+            <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary-inverted">
+              5 000 000 ₽
+            </Typography.TitleResponsive>
+          </div>
+
+          <div style={{ borderTop: '.5px solid #FFFFFF26' }}>
+            <Gap size={8} />
+
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Участие в отборе
+              </Typography.Text>
+              <Typography.Text view="primary-small" color="primary-inverted">
+                2 000 ₽
+              </Typography.Text>
+            </div>
+            <Gap size={4} />
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Доплата после отбора
+              </Typography.Text>
+              <Typography.Text view="primary-small" color="primary-inverted">
+                98 000 ₽
+              </Typography.Text>
+            </div>
+            <Gap size={4} />
+            <div className={appSt.rowSb}>
+              <Typography.Text view="secondary-large" color="secondary-inverted">
+                Доля результата
+              </Typography.Text>
+              <Typography.Text style={{ color: '#00D5BE' }} view="primary-small" color="primary-inverted">
+                90%
+              </Typography.Text>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '12px' }}>
           <div
             onClick={() => {
               setCollapsedItem(items =>
@@ -528,14 +904,14 @@ export const App = () => {
       <div className={appSt.bottomBtn}>
         <Button
           style={{ backgroundColor: '#F2F3F5', color: '#030306E0' }}
-          loading={loading}
           block
           view="primary"
-          onClick={submit}
+          onClick={() => {
+            window.gtag('event', '7204_landing_next_click', { var: 'var4' });
+            setSteps('tariff');
+          }}
         >
-          Пройти отбор
-          <br />
-          <Typography.Text view="secondary-large">Стоимость 2 000 ₽</Typography.Text>
+          Выбрать тариф
         </Button>
       </div>
     </>
