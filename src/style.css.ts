@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css';
+import { recipe } from '@vanilla-extract/recipes';
 
 const bottomBtn = style({
   position: 'fixed',
@@ -38,14 +39,24 @@ const banner = style({
   backgroundColor: '#F2F3F5',
   padding: '1rem',
 });
-const calcBanner = style({
-  borderRadius: '24px',
-  backgroundColor: '#F2F3F5',
-  padding: '1rem',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '8px',
-  color: '#7F7F83',
+const calcBanner = recipe({
+  base: {
+    borderRadius: '24px',
+    backgroundColor: '#F2F3F5',
+    padding: '1rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    color: '#7F7F83',
+    transition: 'background-color 0.3s ease-in-out',
+  },
+  variants: {
+    selected: {
+      true: {
+        backgroundColor: '#DFF8E5',
+      },
+    },
+  },
 });
 
 const compareTable = style({
@@ -61,6 +72,10 @@ const btmContent = style({
   padding: 0,
 });
 
+const swSlide = style({
+  width: 'min-content',
+});
+
 export const appSt = {
   bottomBtn,
   container,
@@ -70,4 +85,5 @@ export const appSt = {
   calcBanner,
   compareTable,
   btmContent,
+  swSlide,
 };

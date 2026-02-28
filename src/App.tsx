@@ -5,19 +5,19 @@ import { Divider } from '@alfalab/core-components/divider/cssm';
 import { Gap } from '@alfalab/core-components/gap/cssm';
 import { List } from '@alfalab/core-components/list/cssm';
 import { PureCell } from '@alfalab/core-components/pure-cell/cssm';
+import { Radio } from '@alfalab/core-components/radio/cssm';
 import { SliderInput } from '@alfalab/core-components/slider-input/cssm';
+import { Status } from '@alfalab/core-components/status/cssm';
+import { Tag } from '@alfalab/core-components/tag/cssm';
 import { Typography } from '@alfalab/core-components/typography/cssm';
-import { ArrowRightMIcon } from '@alfalab/icons-glyph/ArrowRightMIcon';
 import { ChevronDownMIcon } from '@alfalab/icons-glyph/ChevronDownMIcon';
 import { ChevronUpMIcon } from '@alfalab/icons-glyph/ChevronUpMIcon';
 import { DocumentLinesMIcon } from '@alfalab/icons-glyph/DocumentLinesMIcon';
 import { QuestionCircleMIcon } from '@alfalab/icons-glyph/QuestionCircleMIcon';
-
-import { SuperEllipse } from '@alfalab/core-components/icon-view/cssm/super-ellipse';
-
 import { ChangeEvent, Fragment, useEffect, useState } from 'react';
-
+import { Swiper, SwiperSlide } from 'swiper/react';
 import ban1 from './assets/ban1.png';
+import ban2 from './assets/ban2.png';
 import cond1 from './assets/cond1.png';
 import cond2 from './assets/cond2.png';
 import cond3 from './assets/cond3.png';
@@ -30,6 +30,7 @@ import reason2 from './assets/reason_2.png';
 import { LS, LSKeys } from './ls';
 import { appSt } from './style.css';
 import { ThxLayout } from './thx/ThxLayout';
+import { sendDataToGA } from './utils/events';
 
 const compareData = [
   {
@@ -74,8 +75,8 @@ const reasons = [
     img: reason1,
   },
   {
-    title: 'Свободный вывод прибыли',
-    subtitle: 'После испытания — счёт на 100 000 ₽ и свободный вывод прибыли',
+    title: 'Прибыль с миллионов',
+    subtitle: 'После испытания — счёт до 5 000 000 ₽ и свободный вывод прибыли',
     img: reason2,
   },
 ];
@@ -136,10 +137,45 @@ const faqs = [
   },
 ];
 
-const YOUR_PART = 70;
-const SUM_HUNDLE = 100_000;
+const tariffs = [
+  {
+    title: 'Trader',
+    subtitle: 'Брокерский счёт',
+    sum: 100_000,
+    participationCost: 2_000,
+    additionalPayment: 'Не требуется',
+    percent: 70,
+    tariff: 'Базовый тариф',
+  },
+  {
+    title: 'Pro Trader',
+    subtitle: 'Брокерский счёт',
+    sum: 1_000_000,
+    participationCost: 2_000,
+    additionalPayment: '18 000 ₽',
+    percent: 80,
+    tariff: 'Доступен после успешного отбора',
+  },
+  {
+    title: 'Alfa Trader',
+    subtitle: 'Брокерский счёт',
+    sum: 5_000_000,
+    participationCost: 2_000,
+    additionalPayment: '98 000 ₽',
+    percent: 90,
+    tariff: 'Доступен после успешного отбора',
+  },
+];
+
 const MIN = 1;
 const MAX = 100;
+
+const SUM_OPTIONS = [
+  { value: 100_000, percent: 70 },
+  { value: 1_000_000, percent: 80 },
+  { value: 5_000_000, percent: 90 },
+];
+
 export const App = () => {
   const [loading, setLoading] = useState(false);
   const [collapsedItems, setCollapsedItem] = useState<string[]>(['special']);
@@ -147,6 +183,9 @@ export const App = () => {
   const [value, setValue] = useState(10);
   const [showRules, setShowRules] = useState(false);
   const [showFaqs, setShowFaqs] = useState(false);
+  const [sumOption, setSumOption] = useState(SUM_OPTIONS[1]);
+  const [steps, setSteps] = useState<'init' | 'tariff'>('init');
+  const [selectedTariff, setSelectedTariff] = useState<string>('');
 
   const handleInputChange = (
     _: ChangeEvent<HTMLInputElement> | null,
@@ -169,8 +208,8 @@ export const App = () => {
     }
   };
 
-  const income = (value / 100) * SUM_HUNDLE;
-  const netIncome = income * (YOUR_PART / 100);
+  const income = (value / 100) * sumOption.value;
+  const netIncome = income * (sumOption.percent / 100);
 
   useEffect(() => {
     if (!LS.getItem(LSKeys.UserId, null)) {
@@ -179,14 +218,97 @@ export const App = () => {
   }, []);
 
   const submit = () => {
-    window.gtag('event', '7204_landing_next_click', { var: 'var4' });
+    window.gtag('event', '7204_tariff_select', { var: 'var4' });
     setLoading(true);
-    setLoading(false);
-    setThx(true);
+
+    sendDataToGA({ tariff_name: selectedTariff }).then(() => {
+      setLoading(false);
+      setThx(true);
+    });
   };
 
   if (thxShow) {
     return <ThxLayout />;
+  }
+
+  if (steps === 'tariff') {
+    return (
+      <>
+        <div className={appSt.container}>
+          <Typography.TitleResponsive
+            style={{ marginTop: '12px' }}
+            tag="h1"
+            view="large"
+            font="system"
+            weight="medium"
+            color="primary"
+          >
+            Выберите тариф
+          </Typography.TitleResponsive>
+          {tariffs.map(tariff => (
+            <div
+              className={appSt.calcBanner({ selected: selectedTariff === tariff.title })}
+              style={{ gap: '1rem' }}
+              key={tariff.title}
+              onClick={() => setSelectedTariff(tariff.title)}
+            >
+              <div>
+                <div className={appSt.rowSb}>
+                  <Typography.Text view="primary-small" color="primary" weight="bold" defaultMargins={false} tag="p">
+                    {tariff.title}
+                  </Typography.Text>
+                  <Radio checked={selectedTariff === tariff.title} onChange={() => setSelectedTariff(tariff.title)} />
+                </div>
+                <Typography.Text view="primary-small">{tariff.subtitle}</Typography.Text>
+                <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary">
+                  {tariff.sum.toLocaleString('ru-RU')} ₽
+                </Typography.TitleResponsive>
+              </div>
+
+              <div>
+                <div className={appSt.rowSb}>
+                  <Typography.Text view="primary-small">Участие в испытании</Typography.Text>
+                  <Typography.Text view="primary-small" color="primary">
+                    {tariff.participationCost.toLocaleString('ru-RU')} ₽
+                  </Typography.Text>
+                </div>
+                <Gap size={8} />
+                <Divider />
+                <Gap size={8} />
+
+                <div className={appSt.rowSb}>
+                  <Typography.Text view="primary-small">Доплата после испытания</Typography.Text>
+                  <Typography.Text view="primary-small" color="primary">
+                    {tariff.additionalPayment}
+                  </Typography.Text>
+                </div>
+                <Gap size={8} />
+
+                <Divider />
+                <Gap size={8} />
+
+                <div className={appSt.rowSb}>
+                  <Typography.Text view="primary-small">Доля результата</Typography.Text>
+                  <Typography.Text view="primary-small" color="positive">
+                    {tariff.percent}%
+                  </Typography.Text>
+                </div>
+              </div>
+            </div>
+          ))}
+          <Typography.Text view="secondary-large" color="secondary">
+            Тариф можно сменить после прохождения этапа отбора
+          </Typography.Text>
+        </div>
+        <Gap size={96} />
+
+        <div className={appSt.bottomBtn}>
+          <Button loading={loading} block view="primary" onClick={submit} disabled={!selectedTariff}>
+            Выбрать тариф
+          </Button>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -205,10 +327,10 @@ export const App = () => {
             <br />
             портфелем
             <br />
-            до 100 000 ₽
+            до 5 000 000 ₽
           </Typography.TitleResponsive>
           <Typography.Text view="primary-small" color="primary">
-            Забирайте до 70% прибыли
+            Забирайте до 90% прибыли
             <br /> с фиксированным риском
           </Typography.Text>
           <img src={hb} width="100%" height={150} alt="hb" style={{ objectFit: 'contain', margin: '0 auto' }} />
@@ -294,10 +416,26 @@ export const App = () => {
           <PureCell.Content>
             <PureCell.Main>
               <Typography.TitleResponsive tag="h4" view="xsmall" font="system" weight="medium" color="primary">
-                До 70% прибыли
+                До 90% прибыли
               </Typography.TitleResponsive>
               <Typography.Text view="primary-small" color="secondary">
-                Ваша доля от профита составляет до 70%. Выплаты производятся регулярно по итогам периода
+                Ваша доля от профита составляет до 90%. Выплаты производятся регулярно по итогам периода
+              </Typography.Text>
+            </PureCell.Main>
+          </PureCell.Content>
+        </PureCell>
+
+        <PureCell className={appSt.banner}>
+          <PureCell.Graphics verticalAlign="center">
+            <img src={ban2} width={48} height={48} alt="Banner" />
+          </PureCell.Graphics>
+          <PureCell.Content>
+            <PureCell.Main>
+              <Typography.TitleResponsive tag="h4" view="xsmall" font="system" weight="medium" color="primary">
+                Счёт до 5 000 000 ₽
+              </Typography.TitleResponsive>
+              <Typography.Text view="primary-small" color="secondary">
+                Вы можете увеличить размер счета до 5 000 000 ₽ при доплате по тарифу
               </Typography.Text>
             </PureCell.Main>
           </PureCell.Content>
@@ -343,6 +481,31 @@ export const App = () => {
           Сколько можно заработать
         </Typography.TitleResponsive>
 
+        <div>
+          <Typography.Text view="primary-small" color="secondary">
+            Выберите размер счёта
+          </Typography.Text>
+          <Gap size={8} />
+          <Swiper spaceBetween={12} slidesPerView="auto">
+            {SUM_OPTIONS.map(chip => (
+              <SwiperSlide key={chip.value} className={appSt.swSlide}>
+                <Tag
+                  view="filled"
+                  size="xxs"
+                  shape="rectangular"
+                  onClick={() => {
+                    window.gtag('event', '7204_calc_depo_click', { var: 'var4' });
+                    setSumOption(chip);
+                  }}
+                  checked={sumOption.value === chip.value}
+                >
+                  {chip.value.toLocaleString('ru')} ₽
+                </Tag>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
         <SliderInput
           onClick={() => {
             window.gtag('event', '7204_calc_prcnt_click', { var: 'var4' });
@@ -371,18 +534,11 @@ export const App = () => {
           labelView="outer"
         />
 
-        <div className={appSt.calcBanner}>
-          <div className={appSt.rowSb}>
-            <Typography.Text view="primary-small">Размер счёта</Typography.Text>
-            <Typography.Text view="primary-small" color="primary">
-              {SUM_HUNDLE.toLocaleString('ru-RU')} ₽
-            </Typography.Text>
-          </div>
-          <Divider />
+        <div className={appSt.calcBanner()}>
           <div className={appSt.rowSb}>
             <Typography.Text view="primary-small">Ваша доля от прибыли</Typography.Text>
             <Typography.Text view="primary-small" color="primary">
-              {YOUR_PART}%
+              {sumOption.percent}%
             </Typography.Text>
           </div>
           <Divider />
@@ -447,50 +603,67 @@ export const App = () => {
           weight="medium"
           color="primary"
         >
-          Тариф
+          Тарифы
         </Typography.TitleResponsive>
+      </div>
 
-        <div className={appSt.calcBanner} style={{ gap: '1rem' }}>
-          <div>
-            <Typography.Text view="primary-small" color="primary" weight="bold" defaultMargins={false} tag="p">
-              Trader
-            </Typography.Text>
-            <Typography.Text view="primary-small">Брокерский счёт</Typography.Text>
-            <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary">
-              {SUM_HUNDLE.toLocaleString('ru-RU')} ₽
-            </Typography.TitleResponsive>
-          </div>
+      <div>
+        <Swiper style={{ marginLeft: '1rem' }} spaceBetween={12} slidesPerView="auto">
+          {tariffs.map(tariff => (
+            <SwiperSlide key={tariff.title} style={{ maxWidth: '90%' }}>
+              <div className={appSt.calcBanner()} style={{ gap: '1rem' }}>
+                <div>
+                  <Status view="contrast" color={tariff.tariff === 'Базовый тариф' ? 'green' : 'teal'} size={20}>
+                    <Typography.Text view="secondary-small" weight="medium" style={{ textTransform: 'uppercase' }}>
+                      {tariff.tariff}
+                    </Typography.Text>
+                  </Status>
+                </div>
+                <div>
+                  <Typography.Text view="primary-small" color="primary" weight="bold" defaultMargins={false} tag="p">
+                    {tariff.title}
+                  </Typography.Text>
+                  <Typography.Text view="primary-small">{tariff.subtitle}</Typography.Text>
+                  <Typography.TitleResponsive tag="h2" view="small" font="system" weight="medium" color="primary">
+                    {tariff.sum.toLocaleString('ru-RU')} ₽
+                  </Typography.TitleResponsive>
+                </div>
 
-          <div>
-            <div className={appSt.rowSb}>
-              <Typography.Text view="primary-small">Участие в испытании</Typography.Text>
-              <Typography.Text view="primary-small" color="primary">
-                2 000 ₽
-              </Typography.Text>
-            </div>
-            <Gap size={8} />
-            <Divider />
-            <Gap size={8} />
+                <div>
+                  <div className={appSt.rowSb}>
+                    <Typography.Text view="primary-small">Участие в испытании</Typography.Text>
+                    <Typography.Text view="primary-small" color="primary">
+                      {tariff.participationCost.toLocaleString('ru-RU')} ₽
+                    </Typography.Text>
+                  </div>
+                  <Gap size={8} />
+                  <Divider />
+                  <Gap size={8} />
 
-            <div className={appSt.rowSb}>
-              <Typography.Text view="primary-small">Доплата после испытания</Typography.Text>
-              <Typography.Text view="primary-small" color="primary">
-                Не требуется
-              </Typography.Text>
-            </div>
-            <Gap size={8} />
+                  <div className={appSt.rowSb}>
+                    <Typography.Text view="primary-small">Доплата после испытания</Typography.Text>
+                    <Typography.Text view="primary-small" color="primary">
+                      {tariff.additionalPayment}
+                    </Typography.Text>
+                  </div>
+                  <Gap size={8} />
 
-            <Divider />
-            <Gap size={8} />
+                  <Divider />
+                  <Gap size={8} />
 
-            <div className={appSt.rowSb}>
-              <Typography.Text view="primary-small">Доля результата</Typography.Text>
-              <Typography.Text view="primary-small" color="positive">
-                {YOUR_PART}%
-              </Typography.Text>
-            </div>
-          </div>
-        </div>
+                  <div className={appSt.rowSb}>
+                    <Typography.Text view="primary-small">Доля результата</Typography.Text>
+                    <Typography.Text view="primary-small" color="positive">
+                      {tariff.percent}%
+                    </Typography.Text>
+                  </div>
+                </div>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+      <div className={appSt.container}>
         <div />
 
         <PureCell
@@ -535,25 +708,14 @@ export const App = () => {
       <div className={appSt.bottomBtn}>
         <Button
           loading={loading}
-          size={72}
           block
           view="primary"
-          onClick={submit}
-          style={{ padding: '1rem', borderRadius: '24px' }}
+          onClick={() => {
+            window.gtag('event', '7204_landing_next_click', { var: 'var4' });
+            setSteps('tariff');
+          }}
         >
-          <div className={appSt.rowSb}>
-            <div style={{ textAlign: 'left' }}>
-              <Typography.Text view="primary-medium" color="primary-inverted" weight="medium" tag="p" defaultMargins={false}>
-                Принять участие
-              </Typography.Text>
-              <Typography.Text view="secondary-large" style={{ color: '#7F7F83' }}>
-                Стоимость испытания 2 000 ₽
-              </Typography.Text>
-            </div>
-            <SuperEllipse backgroundColor="#FFFFFF" size={48}>
-              <ArrowRightMIcon color="#212124" />
-            </SuperEllipse>
-          </div>
+          Выбрать тариф
         </Button>
       </div>
 
@@ -563,7 +725,7 @@ export const App = () => {
           setShowFaqs(false);
         }}
         contentClassName={appSt.btmContent}
-        title="Вопросы и ответы"
+        title="Вопросы и ответы"
         hasCloser
         stickyHeader
       >
